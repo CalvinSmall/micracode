@@ -1,0 +1,11 @@
+# Bun configuration for the Micracode monorepo.
+# See https://bun.sh/docs/runtime/bunfig for reference.
+
+[install]
+# Use exact versions by default so lockfile churn is predictable.
+exact = false
+# Install peer dependencies automatically where possible.
+peer = true
+
+[install.cache]
+disable = false

@@ -1,0 +1,27 @@
+{
+  "name": "@micracode/shared",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared TypeScript types and runtime contracts for Micracode (web <-> api).",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./stream-events": {
+      "types": "./src/stream-events.ts",
+      "default": "./src/stream-events.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "echo 'shared: no lint'",
+    "format": "prettier --check src"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

@@ -1,0 +1,103 @@
+"""Unit tests for the provider/model catalog + resolver."""
+
+from __future__ import annotations
+
+import pytest
+
+from micracode_api.agents import model_catalog
+from micracode_api.config import Settings
+
+
+def _settings(**overrides: object) -> Settings:
+    base = {
+        "google_api_key": "",
+        "openai_api_key": "",
+        "openai_model": "",
+        "gemini_model": "gemini-2.5-flash",
+        "llm_provider": "gemini",
+    }
+    base.update(overrides)
+    return Settings(**base)  # type: ignore[arg-type]
+
+
+def test_list_catalog_flags_availability_per_key() -> None:
+    catalog = model_catalog.list_catalog(
+        _settings(openai_api_key="sk-x", google_api_key="")
+    )
+    providers = {p["id"]: p for p in catalog["providers"]}
+    assert providers["openai"]["available"] is True
+    assert providers["gemini"]["available"] is False
+    # All registered models are present with id+label.
+    assert all({"id", "label"} <= m.keys() for m in providers["openai"]["models"])
+
+
+def test_list_catalog_default_prefers_settings_when_valid() -> None:
+    catalog = model_catalog.list_catalog(
+        _settings(
+            llm_provider="openai",
+            openai_api_key="sk-x",
+            openai_model="gpt-4.1",
+        )
+    )
+    assert catalog["default"] == {"provider": "openai", "model": "gpt-4.1"}
+
+
+def test_list_catalog_default_falls_back_when_env_model_unregistered() -> None:
+    catalog = model_catalog.list_catalog(
+        _settings(
+            llm_provider="openai",
+            openai_api_key="sk-x",
+            openai_model="gpt-something-custom",
+        )
+    )
+    # env model is not in the registry; fall back to first available provider's
+    # first model. Only openai has a key here.
+    assert catalog["default"]["provider"] == "openai"
+    assert catalog["default"]["model"] == "gpt-5.4"
+
+
+def test_resolve_returns_default_when_both_missing() -> None:
+    settings = _settings(
+        llm_provider="gemini",
+        google_api_key="gk",
+        gemini_model="gemini-2.5-flash",
+    )
+    assert model_catalog.resolve(None, None, settings) == (
+        "gemini",
+        "gemini-2.5-flash",
+    )
+
+
+def test_resolve_rejects_partial_selection() -> None:
+    settings = _settings(openai_api_key="sk-x")
+    with pytest.raises(ValueError, match="together"):
+        model_catalog.resolve("openai", None, settings)
+    with pytest.raises(ValueError, match="together"):
+        model_catalog.resolve(None, "gpt-5.4", settings)
+
+
+def test_resolve_rejects_unknown_provider() -> None:
+    with pytest.raises(ValueError, match="Unknown provider"):
+        model_catalog.resolve(
+            "anthropic", "claude", _settings(openai_api_key="sk-x")
+        )
+
+
+def test_resolve_rejects_unknown_model() -> None:
+    with pytest.raises(ValueError, match="Unknown model"):
+        model_catalog.resolve(
+            "openai", "gpt-9-turbo", _settings(openai_api_key="sk-x")
+        )
+
+
+def test_resolve_rejects_provider_without_key() -> None:
+    with pytest.raises(ValueError, match="OPENAI_API_KEY"):
+        model_catalog.resolve("openai", "gpt-5.4", _settings(openai_api_key=""))
+
+
+def test_resolve_accepts_valid_selection() -> None:
+    settings = _settings(openai_api_key="sk-x")
+    assert model_catalog.resolve("openai", "gpt-4.1", settings) == (
+        "openai",
+        "gpt-4.1",
+    )
