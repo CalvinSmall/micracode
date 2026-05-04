@@ -2,9 +2,8 @@
 
 One async generator, two LLM calls (plan, codegen), one patch-apply pass.
 State flows as function arguments; events are ``yield``-ed to the SSE
-router. The router writes files to disk on ``FileWriteEvent`` frames;
-this module stays pure except for reading project state through
-``storage`` to build context.
+router. File writes and deletes are persisted to storage here, before
+the matching event is yielded, so storage and the client tree stay in sync.
 
 History threading (``_history_to_messages``) and ``CodegenError`` are
 preserved here so router code and tests can keep importing them through
@@ -321,8 +320,28 @@ async def run_codegen_stream(
                 recoverable=True,
             )
         elif result.kind == "delete":
+            try:
+                store.delete_file(project_id, result.path)
+            except ValueError as exc:
+                yield ErrorEvent(
+                    message=f"rejected file.delete {result.path}: {exc}",
+                    recoverable=True,
+                )
+                continue
+            except OSError:
+                logger.exception("file.delete failed path=%s", result.path)
             yield FileDeleteEvent(path=result.path)
         else:
+            try:
+                store.write_file(project_id, result.path, result.content)
+            except ValueError as exc:
+                yield ErrorEvent(
+                    message=f"rejected file.write {result.path}: {exc}",
+                    recoverable=True,
+                )
+                continue
+            except OSError:
+                logger.exception("file.write failed path=%s", result.path)
             yield FileWriteEvent(path=result.path, content=result.content)
 
     yield StatusEvent(stage="done")

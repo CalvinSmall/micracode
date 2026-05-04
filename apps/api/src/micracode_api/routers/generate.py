@@ -11,9 +11,9 @@ response as a data stream.
 Responsibilities on the local-filesystem build:
 
 - persist the user's prompt to ``prompts.jsonl`` when the request lands;
-- apply every ``file.write`` / ``file.delete`` to disk before emitting
-  the matching ``data-file-*`` frame so storage and the client tree stay
-  in sync;
+- translate orchestrator :class:`StreamEvent` instances to AI SDK wire
+  frames (file persistence happens in the orchestrator before each event
+  is yielded);
 - accumulate the assistant's text deltas and append the full reply to
   ``prompts.jsonl`` when the stream terminates.
 
@@ -107,18 +107,6 @@ async def _ui_message_stream(
                     {"type": "text-delta", "id": text_id, "delta": event.content}
                 )
             elif event.type == "file.write":
-                try:
-                    storage.write_file(slug, event.path, event.content)
-                except ValueError as exc:
-                    yield _frame(
-                        {
-                            "type": "error",
-                            "errorText": f"rejected file.write {event.path}: {exc}",
-                        }
-                    )
-                    continue
-                except OSError:
-                    logger.exception("file.write failed path=%s", event.path)
                 yield _frame(
                     {
                         "type": "data-file-write",
@@ -127,18 +115,6 @@ async def _ui_message_stream(
                     }
                 )
             elif event.type == "file.delete":
-                try:
-                    storage.delete_file(slug, event.path)
-                except ValueError as exc:
-                    yield _frame(
-                        {
-                            "type": "error",
-                            "errorText": f"rejected file.delete {event.path}: {exc}",
-                        }
-                    )
-                    continue
-                except OSError:
-                    logger.exception("file.delete failed path=%s", event.path)
                 yield _frame(
                     {
                         "type": "data-file-delete",
