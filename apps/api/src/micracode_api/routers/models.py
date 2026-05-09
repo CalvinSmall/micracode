@@ -17,4 +17,4 @@ router = APIRouter()
 
 @router.get("/models")
 async def models() -> dict:
-    return list_catalog(get_settings())
+    return await list_catalog(get_settings())

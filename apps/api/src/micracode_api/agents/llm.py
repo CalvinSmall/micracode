@@ -11,6 +11,7 @@ from typing import Any
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_ollama import ChatOllama
 from langchain_openai import ChatOpenAI
 
 from ..config import get_settings
@@ -59,6 +60,17 @@ class LLMFactory:
             if not resolved_model.startswith("gpt-5"):
                 openai_kwargs["temperature"] = temperature
             return ChatOpenAI(**openai_kwargs)
+
+        if resolved_provider == "ollama":
+            resolved_model = model or settings.ollama_model
+            if not resolved_model:
+                raise ValueError("OLLAMA_MODEL is not set; required when LLM_PROVIDER=ollama.")
+            return ChatOllama(
+                model=resolved_model,
+                base_url=settings.ollama_base_url,
+                temperature=temperature,
+                **kwargs,
+            )
 
         raise ValueError(f"Unsupported LLM provider: {resolved_provider!r}")
 

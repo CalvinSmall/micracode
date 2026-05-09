@@ -84,7 +84,9 @@ export function ModelPicker({ className }: { className?: string }) {
                       title={
                         p.id === "openai"
                           ? "Set OPENAI_API_KEY on the server to enable."
-                          : "Set GOOGLE_API_KEY on the server to enable."
+                          : p.id === "gemini"
+                          ? "Set GOOGLE_API_KEY on the server to enable."
+                          : "Provider is not available."
                       }
                     >
                       unavailable

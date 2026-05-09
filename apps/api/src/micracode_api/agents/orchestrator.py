@@ -16,6 +16,8 @@ import asyncio
 import logging
 from collections.abc import AsyncIterator
 
+import httpx
+
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 
@@ -239,6 +241,19 @@ async def run_codegen_stream(
         yield ErrorEvent(message=str(exc), recoverable=False)
         return
 
+    if resolved_provider == "ollama":
+        try:
+            async with httpx.AsyncClient(timeout=3.0) as client:
+                await client.get(f"{current.ollama_base_url}/api/tags")
+        except Exception:
+            yield ErrorEvent(
+                message=(
+                    f"Ollama is not running at {current.ollama_base_url}. "
+                    "Start Ollama and try again."
+                ),
+                recoverable=False,
+            )
+            return
     if resolved_provider == "openai" and not current.openai_api_key:
         yield ErrorEvent(
             message=_missing_api_key_message("openai"), recoverable=False

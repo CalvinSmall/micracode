@@ -17,6 +17,7 @@ dependencies = [
     "langchain-core>=0.3.0",
     "langchain-google-genai>=2.0.0",
     "langchain-openai>=0.2.0",
+    "langchain-ollama>=0.2.0",
     "sse-starlette>=2.1.0",
     "orjson>=3.10.0",
 ]
