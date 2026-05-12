@@ -25,11 +25,13 @@ copy it to `apps/api/.env` and edit.
 
 | Variable           | Default              | Purpose                                                                                  |
 | ------------------ | -------------------- | ---------------------------------------------------------------------------------------- |
-| `LLM_PROVIDER`     | `gemini`             | Default provider. `gemini` or `openai`.                                                   |
+| `LLM_PROVIDER`     | `gemini`             | Default provider. `gemini`, `openai`, or `ollama`.                                        |
 | `GOOGLE_API_KEY`   | —                    | Required when `LLM_PROVIDER=gemini` (or whenever a user picks a Gemini model in the UI).  |
 | `GEMINI_MODEL`     | `gemini-2.5-flash`   | Default Gemini model (used as fallback when the client doesn't send one).                 |
 | `OPENAI_API_KEY`   | —                    | Required when `LLM_PROVIDER=openai` (or whenever a user picks an OpenAI model).           |
 | `OPENAI_MODEL`     | —                    | Default OpenAI model. No default — must be one of the registered IDs (see below).         |
+| `OLLAMA_BASE_URL`  | `http://localhost:11434` | Base URL for the local Ollama daemon. Only used when `LLM_PROVIDER=ollama`.           |
+| `OLLAMA_MODEL`     | —                    | Default Ollama model (e.g. `llama3.2`). Required when `LLM_PROVIDER=ollama`.             |
 | `OPENER_APPS_DIR`  | `~/opener-apps`      | Optional override for where generated projects are stored. Useful for tests or sandboxes. |
 | `LOG_LEVEL`        | `INFO`               | Standard Python log level for the API process.                                            |
 
@@ -65,6 +67,10 @@ documentation, the accepted IDs are:
 - `gpt-5.4`
 - `gpt-5-mini`
 - `gpt-4.1`
+
+**Ollama (local)**
+
+Ollama models are **not** a static list — they are fetched dynamically from your local Ollama daemon (`GET /api/tags`) each time `GET /v1/models` is called. Any model you have pulled with `ollama pull <model>` will appear in the UI picker automatically. If the daemon is not reachable or has no models installed, the Ollama section is omitted from the picker entirely.
 
 To see the live list (including which providers are currently
 "available" — meaning a key is configured), hit:

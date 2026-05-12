@@ -42,7 +42,7 @@ Star us, and you will receive all release notifications from GitHub without any 
 
 - **📝 In-Browser Monaco Editor** — Edit generated code directly in a full Monaco editor; changes persist to disk.
 
-- **🔌 Pluggable LLM Providers** — Ships with Google Gemini by default; switch to OpenAI with one env var. Configurable model IDs.
+- **🔌 Pluggable LLM Providers** — Ships with Google Gemini by default; switch to OpenAI or local Ollama with one env var. Ollama models are discovered dynamically — no API key required.
 
 - **📦 Local-First Storage** — Projects live as plain folders on your filesystem. No database, no auth, no cloud service required.
 
@@ -56,7 +56,7 @@ Star us, and you will receive all release notifications from GitHub without any 
 
 ### Backend
 - **FastAPI** — High-performance Python web framework
-- **LangChain + Google Gemini / OpenAI** — Pluggable LLM orchestration (gemini-2.5-flash by default)
+- **LangChain + Google Gemini / OpenAI / Ollama** — Pluggable LLM orchestration (gemini-2.5-flash by default)
 - **SSE-Starlette** — Server-sent events for streaming code generation
 - **UV** — Modern Python package manager
 - **Pytest** — Storage and HTTP test suite
@@ -84,7 +84,7 @@ Star us, and you will receive all release notifications from GitHub without any 
 - **Bun** ≥ 1.1.0
 - **Python** ≥ 3.12 (managed automatically by `uv`)
 - **uv** ≥ 0.4
-- A **Google Gemini** or **OpenAI** API key or local model
+- A **Google Gemini** or **OpenAI** API key, **or** a locally running [Ollama](https://ollama.com) instance (no API key needed)
 
 ### Environment Setup
 
@@ -106,6 +106,15 @@ LLM_PROVIDER=openai
 OPENAI_API_KEY=your_openai_api_key
 OPENAI_MODEL=gpt-4o
 ```
+
+Or use a local [Ollama](https://ollama.com) model (no API key required):
+```env
+LLM_PROVIDER=ollama
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.2
+```
+
+Ollama models are discovered dynamically from your local daemon — any model you have pulled (`ollama pull <model>`) will appear in the UI picker automatically.
 
 See [`docs/configuration.md`](./docs/configuration.md) for the full reference and supported model IDs.
 
